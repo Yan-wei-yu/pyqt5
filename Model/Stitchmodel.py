@@ -73,21 +73,8 @@ class StitchModel(BaseModel):
         """保存縫合結果"""
         if not self.prepare_file or not self.smooth_ai_file or not self.output_folder:
             return False  # 如果缺少必要檔案或輸出資料夾，返回 False
-        try:
-            processor = stitchmodel.MeshProcessor(self.prepare_file, self.smooth_ai_file, self.output_folder)  # 傳入輸出資料夾
-            final_output = processor.process_complete_workflow(thickness=0)  # 執行完整工作流程
-            if final_output and os.path.exists(final_output):
-                # 在第二個渲染器中顯示結果
-                stitched_model = readmodel.load_3d_model(final_output)  # 載入AIsmooth模型
-                stitched_actor = readmodel.create_actor(stitched_model, (0.98, 0.98, 0.92))  # 假設 read_3d_file 返回 VTK actor
-                if stitched_actor:
-                    renderer2.RemoveAllViewProps()  # 清空第二渲染器
-                    renderer2.AddActor(stitched_actor)
-                    renderer2.ResetCamera()
-                    renderer2.GetRenderWindow().Render()
-                    print(f"Stitch saved successfully to: {final_output}")
-                    return True
-            return False
-        except Exception as e:
-            print(f"Error during stitching: {e}")
-            return False
+        processor = stitchmodel.MeshProcessor(self.prepare_file, self.smooth_ai_file, self.output_folder)  # 傳入輸出資料夾
+        final_output = processor.process_complete_workflow(thickness=0)  # 執行完整工作流程
+        if final_output and os.path.exists(final_output):
+            readmodel.render_file_in_second_window(renderer2, final_output)  # 在第二窗口渲染
+

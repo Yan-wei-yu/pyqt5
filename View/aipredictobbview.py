@@ -138,20 +138,21 @@ class AimodelOBBView(BaseView):
                     self.model.set_reference_file(file_path, position_type)  # 設置參考文件
         else:  # 如果未選擇文件（取消選擇）
             # 移除下顎演員並重置
-            if self.model.lower_actor:
-                self.render_input.RemoveActor(self.model.lower_actor)
-                self.render_input.ResetCamera()
-                self.render_input.GetRenderWindow().Render()
-                self.model.lower_file = ""  # 清空下顎文件路徑
-                self.model.lower_center = None  # 清空下顎中心
-                self.model.models_center = None  # 清空模型中心
-            # 移除上顎演員並重置
-            if self.model.upper_actor:
-                self.render_input.RemoveActor(self.model.upper_actor)
-                self.render_input.ResetCamera()
-                self.render_input.GetRenderWindow().Render()
-                self.model.upper_file = ""  # 清空上顎文件路徑
-                self.model.upper_center = None  # 清空上顎中心
-                self.model.models_center = None  # 清空模型中心
+            if hasattr(self, 'model.lower_actor'):
+                if self.model.lower_actor:
+                    self.render_input.RemoveActor(self.model.lower_actor)
+                    self.render_input.ResetCamera()
+                    self.render_input.GetRenderWindow().Render()
+                    self.model.lower_file = ""  # 清空下顎文件路徑
+                    self.model.lower_center = None  # 清空下顎中心
+                    self.model.models_center = None  # 清空模型中心
+                # 移除上顎演員並重置
+                if self.model.upper_actor:
+                    self.render_input.RemoveActor(self.model.upper_actor)
+                    self.render_input.ResetCamera()
+                    self.render_input.GetRenderWindow().Render()
+                    self.model.upper_file = ""  # 清空上顎文件路徑
+                    self.model.upper_center = None  # 清空上顎中心
+                    self.model.models_center = None  # 清空模型中心
         self.update_view()  # 更新視圖
         return file_path  # 返回選擇的文件路徑
