@@ -17,7 +17,7 @@ class AimodelOBBView(BaseView):
         self.area_picker = vtk.vtkAreaPicker()  # 創建區域選擇器
         self.render_widget.SetPicker(self.area_picker)  # 設置選擇器到渲染窗口
         # 設置高亮交互樣式
-        self.highlight_style = forvtkinteractor.HighlightInteractorStyle()
+        self.highlight_style = forvtkinteractor.HighlightInteractorStyle(self.interactor,renderinput)
         self.interactor.SetInteractorStyle(self.highlight_style)
 
         # 新增模型選擇的下拉選單
