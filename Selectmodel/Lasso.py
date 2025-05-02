@@ -33,11 +33,11 @@ class LassoInteractor(vtk.vtkInteractorStyle): # 繼承vtkInteractorStyle類別
             indices = np.array([row*size[0]+col for col,row in zip(x,y)]) # 計算像素的索引
             pixels[indices] = 255 ^ pixels[indices] # 繪製像素，將像素值取反
             
-    def __init__(self,poly_data,interactor,renderer): # 初始化函式，傳入poly_data和renderer
+    def __init__(self,poly_data,renderer): # 初始化函式，傳入poly_data和renderer
         super().__init__()
-        self.interactor = interactor # 互動器
         self.renderer = renderer # 渲染器
         self.poly_data = poly_data  # 輸入資料
+        self.colorActors = [] #暫存染色資料
         self.setup() # 設定初始值
         self.AddObserver("MouseMoveEvent", self.onMouseMove) # 滑鼠移動事件
         self.AddObserver("LeftButtonPressEvent", self.onLeftButtonDown) # 滑鼠左鍵按下事件
@@ -167,3 +167,45 @@ class LassoInteractor(vtk.vtkInteractorStyle): # 繼承vtkInteractorStyle類別
         self.selected_ids = selected_ids
     def getClip(self):
         return self.selected_ids # 返回選取的輸出資料
+class LassoAreaColor():
+    def __init__(self,poly_data,renderer,interactor): # 初始化函式，傳入poly_data和renderer
+        self.poly_data = poly_data # 輸入資料
+        self.renderer = renderer # 渲染器
+        self.interactor = interactor # 互動器
+        self.colorActors = []
+
+    def show_all_area(self,select_ids):
+        points = vtk.vtkPoints() # 創建一個 vtkPoints 對象來儲存選取的點
+        for i in range(select_ids.GetNumberOfTuples()): # 迭代所有選取的點
+            try: # 確認是否有點
+                point_id = select_ids.GetValue(i) # 取得點的id
+                x, y, z = self.poly_data.GetPoint(point_id) # 取得點的座標
+                points.InsertNextPoint(x, y, z) # 將點加入vtkPoints
+            except Exception as e: # 如果沒有點，擲回錯誤訊息
+                print(f"[ERROR] point_id={point_id}: {e}")
+        poly_data = vtk.vtkPolyData()
+        poly_data.SetPoints(points)
+
+        vertex_filter = vtk.vtkVertexGlyphFilter()
+        vertex_filter.SetInputData(poly_data)
+        vertex_filter.Update()
+
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(vertex_filter.GetOutputPort())
+
+        actor = vtk.vtkActor()
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(1.0, 0.0, 0.0)  
+        actor.GetProperty().SetPointSize(5)         
+        self.colorActors.append(actor)
+        self.renderer.AddActor(actor)
+        self.renderer.GetRenderWindow().Render()
+        if self.interactor is not None:
+            self.interactor.GetRenderWindow().Render()
+    def unRenderAllSelectors(self):
+        for colorActor in self.colorActors:
+            self.renderer.RemoveActor(colorActor)
+        if self.interactor:
+            self.interactor.GetRenderWindow().Render()
+    
+        
