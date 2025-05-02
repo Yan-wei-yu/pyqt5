@@ -40,7 +40,15 @@ class MutipleDepthView(BaseView):
         if current_panel:
             parent_layout.removeWidget(current_panel)
 
-        panel = QGroupBox("多次創建深度圖")  # 創建分組框
+        # 根據 self.model 的類別名稱動態設定 QGroupBox 的標題
+        model_class_name = self.model.__class__.__name__
+        if "OBB" in model_class_name:
+            panel_title = "多次OBB創建深度圖"
+        else:
+            panel_title = "多次創建深度圖"
+
+        # 創建分組框並設定標題
+        panel = QGroupBox(panel_title)  # 創建分組框
         layout = QVBoxLayout()  # 設定主佈局為垂直排列
 
         # 上顎模型檔案選擇

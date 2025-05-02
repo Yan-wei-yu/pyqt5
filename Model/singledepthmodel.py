@@ -6,7 +6,7 @@ class SingleDepthModel(BaseModel):
     model_updated = pyqtSignal()  # 定義一個信號，用來通知模型已經更新
 
     def __init__(self):
-        super().__init__()  # 呼叫父類別的構造函數
+        super().__init__()  # 呼叫父類別的構造函數，否則僅繼承不會執行父類別的初始化邏輯
         # 初始化物件的屬性
         self.upper_file = ""  # 上層文件的路徑
         self.lower_file = ""  # 下層文件的路徑

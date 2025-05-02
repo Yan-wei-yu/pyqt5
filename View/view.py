@@ -47,7 +47,7 @@ class View(QMainWindow):  # 定義主視圖類別，繼承自 QMainWindow
         for attr, text in self.buttons.items():  # 迴圈建立按鈕
             button = QPushButton(text)  # 創建按鈕
             button.setStyleSheet(buttonStyle)  # 設定樣式
-            setattr(self, attr, button)  # 將按鈕物件設為類別屬性
+            setattr(self, attr, button)  # 使用 setattr 動態將每個按鈕以名稱註冊為類別屬性，之後可用 self.<名稱> 直接操作
             self.buttonPanel.addWidget(button)  # 新增按鈕至面板
             self.buttonPanel.addSpacing(20)  # 增加間距
         

@@ -2,6 +2,7 @@ from PyQt5.QtCore import pyqtSignal
 import os
 from .BaseModel import BaseModel
 from Otherfunction import readmodel, trianglegood,trianglegoodobbox
+import vtk
 
 class RemeshModel(BaseModel):
     model_updated = pyqtSignal()  # 定義類級別的信號，用於通知模型更新
@@ -81,7 +82,30 @@ class RemeshModel(BaseModel):
                     output_stl_path,
                 )
             reconstructor.reconstruct(self.rotate_angle)  # 執行重建，傳入旋轉角度
+
+            # 平滑處理STL文件
+            smoothed_stl_path = os.path.splitext(output_stl_path)[0] + "_smoothed.stl"
+            self.smooth_stl(output_stl_path, smoothed_stl_path)  # 平滑處理STL文件
+
             # 在第二個渲染窗口中顯示重建結果
-            readmodel.render_file_in_second_window(render2, output_stl_path)
+            readmodel.render_file_in_second_window(render2, smoothed_stl_path)
             return True
         return False  # 如果條件不滿足，返回 False
+    
+    def smooth_stl(self, input_stl_path, output_stl_path, iterations=20, relaxation_factor=0.2):
+        """對 STL 進行平滑處理"""
+        reader = vtk.vtkSTLReader()
+        reader.SetFileName(input_stl_path)
+        
+        smoother = vtk.vtkSmoothPolyDataFilter()
+        smoother.SetInputConnection(reader.GetOutputPort())
+        smoother.SetNumberOfIterations(iterations)  # 設定平滑迭代次數
+        smoother.SetRelaxationFactor(relaxation_factor)  # 控制平滑強度
+        smoother.FeatureEdgeSmoothingOff()
+        smoother.BoundarySmoothingOn()
+        smoother.Update()
+
+        writer = vtk.vtkSTLWriter()
+        writer.SetFileName(output_stl_path)
+        writer.SetInputConnection(smoother.GetOutputPort())
+        writer.Write()

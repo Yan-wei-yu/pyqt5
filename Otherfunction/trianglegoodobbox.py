@@ -26,7 +26,7 @@ class DentalModelReconstructor:
     @staticmethod
     def compute_obb_aligned_bounds(polydata, upper_polydata=None, angle=None):
         """
-        計算 OBB 的邊界並對齊到世界坐標軸，可選擇沿 Y 軸額外旋轉角度。
+        計算 OBB 的邊界並將傳入的polydata對齊到世界坐標軸，可選擇沿 Y 軸額外旋轉角度。
         
         參數:
         polydata: vtkPolyData 對象，表示輸入的 3D 資料
@@ -183,38 +183,47 @@ class DentalModelReconstructor:
         reader.Update()
         polydata = reader.GetOutput()
 
+        # 計算 OBB 邊界並將polydata對齊到世界坐標軸
+        bounds = self.compute_obb_aligned_bounds(polydata)
+
         # 提取頂點數據
         points = polydata.GetPoints()
         vertices = np.array([points.GetPoint(i) for i in range(points.GetNumberOfPoints())])
 
-        # 根據角度進行旋轉
-        if angle != 0:
+        # 若需要側面，再做 Y 軸旋轉
+        if angle in (90, -90): # 90 表示舌側，-90 表示頰側
             # 計算質心並移動至原點
             centroid = np.mean(vertices, axis=0)
             vertices -= centroid
 
-            # 定義旋轉矩陣（沿 Y 軸旋轉）
-            if angle == 90:  # 舌側
-                rotation_matrix = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]])  # 順時針 90 度
-            elif angle == -90:  # 頰側
-                rotation_matrix = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]])  # 逆時針 90 度
+            # 角度轉弧度
+            theta = np.radians(angle) # angle = ±90 → theta = ±π/2
 
-            # 套用旋轉
-            vertices = vertices @ rotation_matrix.T
+            # 定義 Y 軸旋轉矩陣
+            rotation_y = np.array([
+                [ np.cos(theta), 0, np.sin(theta)], # X → X, Z → X
+                [            0, 1,            0], # Y 維不變
+                [-np.sin(theta), 0, np.cos(theta)] # X → Z, Z → Z
+            ])
+            vertices = vertices @ rotation_y.T # 套用旋轉矩陣
+            vertices += centroid # 將點雲移回原位置
+            new_pts = vtk.vtkPoints()
+            new_pts.SetData(np_to_vtk(vertices))
+            polydata.SetPoints(new_pts)
 
-            # 將點雲移回原位置
-            vertices += centroid
+            # 從旋轉後的 vertices 計算邊界
+            bounds = polydata.GetBounds()
 
-        # 從旋轉後的 vertices 計算邊界
-        min_x, max_x = np.min(vertices[:, 0]), np.max(vertices[:, 0])
-        min_y, max_y = np.min(vertices[:, 1]), np.max(vertices[:, 1])
-        min_z, max_z = np.min(vertices[:, 2]), np.max(vertices[:, 2])
+        min_x, max_x = bounds[0], bounds[1]
+        min_y, max_y = bounds[2], bounds[3]
+        min_z, max_z = bounds[4], bounds[5]
 
         # 如果不是咬合面視角，壓縮 Z 軸
         if angle != 0:
             min_z = max_z - (max_z - min_z) * 0.5
 
         # 生成點雲
+        # 找出灰階影像中亮度不為 0 的區域與最大亮度，用來對應後面深度的 Z 軸轉換比例。
         max_value, min_value = 0, 255
         for y in range(height):
             for x in range(width):
