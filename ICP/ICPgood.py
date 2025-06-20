@@ -199,6 +199,76 @@ class MultiwayRegistration:
             pcd_combined1 += pcds1[point_id]
 
         return pcd_combined1  # 返回最終合併的點雲
+    def run_registration_sec(self, mesh_target, mesh_source):
+        """
+        執行三個網格的多路配準。
+        參數:
+            mesh_target: 目標網格文件路徑
+            mesh_source: 源網格文件路徑
+            mesh_third: 第三個網格文件路徑
+        返回:
+            合併後的點雲
+        """
+        # 讀取三個網格並設定顏色
+        mesh1 = o3d.io.read_triangle_mesh(mesh_target)  # 目標網格
+        mesh2 = o3d.io.read_triangle_mesh(mesh_source)  # 源網格
+        mesh1.paint_uniform_color([1, 0.706, 0])  # 橙色
+        mesh2.paint_uniform_color([0, 0.706, 1])  # 青色
+
+        # 轉換為點雲並提取頂點
+        source = o3d.geometry.PointCloud()
+        target = o3d.geometry.PointCloud()
+        target.points = o3d.utility.Vector3dVector(np.array(mesh1.vertices))
+        source.points = o3d.utility.Vector3dVector(np.array(mesh2.vertices))
+
+        # 旋轉點雲
+        rotation_angle = -np.pi / 2  # 旋轉 -90 度
+        source = self.rotate_around_y_axis(source, -rotation_angle)  # 源點雲旋轉
+
+        # 平移調整
+        target.translate(-np.mean(np.asarray(target.points), axis=0))  # 目標點雲移至原點
+        source.translate(np.array([5, 0, 0]))  # 源點雲平移
+        # third.translate(np.array([5, 0, -2]))    # 第三點雲平移
+
+        # 估計法向量
+        search_param = o3d.geometry.KDTreeSearchParamHybrid(radius=20, max_nn=40)  # 搜索參數
+        source.estimate_normals(search_param=search_param)
+        target.estimate_normals(search_param=search_param)
+
+        # 設定點雲顏色
+        target.paint_uniform_color([0, 1, 0])  # 綠色
+        source.paint_uniform_color([1, 0, 0])  # 紅色
+
+        # 第一次配準（source 與 target）
+        pcds_down = self.load_point_clouds([source, target])  # 降採樣點雲
+        with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug):  # 啟用調試信息
+            pose_graph = self.full_registration(pcds_down)  # 構建姿態圖
+
+        print("Optimizing PoseGraph ...")  # 提示優化姿態圖
+        option = o3d.pipelines.registration.GlobalOptimizationOption(
+            max_correspondence_distance=self.max_corr_dist_fine,
+            edge_prune_threshold=0.1,
+            reference_node=0)  # 全局優化選項
+        with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug):
+            o3d.pipelines.registration.global_optimization(
+                pose_graph,
+                o3d.pipelines.registration.GlobalOptimizationLevenbergMarquardt(),  # 優化方法
+                o3d.pipelines.registration.GlobalOptimizationConvergenceCriteria(),  # 收斂標準
+                option)
+
+        # 轉換並合併點雲
+        pcds = self.load_point_clouds([source, target])
+        pcd_combined = o3d.geometry.PointCloud()
+        for point_id in range(len(pcds)):
+            pcds[point_id].transform(pose_graph.nodes[point_id].pose)  # 應用轉換
+            pcd_combined += pcds[point_id]  # 合併點雲
+        pcd_combined.translate(-np.mean(np.asarray(pcd_combined.points), axis=0))  # 移至原點
+        pcd_combined.estimate_normals(search_param=search_param)  # 估計法向量
+
+
+        return pcd_combined  # 返回最終合併的點雲
+
+
 # # 使用範例：
 # if __name__ == "__main__":
 #     # 替換成你實際的 STL 檔案路徑

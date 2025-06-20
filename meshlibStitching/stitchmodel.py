@@ -69,8 +69,8 @@ class MeshProcessor:
             threshold.SetLowerThreshold(0.55)  # 設置下限閾值
             threshold.SetUpperThreshold(4)     # 設置上限閾值
         else:
-            threshold.SetLowerThreshold(0.22)  # 預設下限閾值
-            threshold.SetUpperThreshold(3.5)   # 預設上限閾值
+            threshold.SetLowerThreshold(0.35)  # 預設下限閾值
+            threshold.SetUpperThreshold(2)   # 預設上限閾值
         threshold.Update()  # 執行閾值過濾
 
         geometry_filter = vtk.vtkGeometryFilter()  # 創建幾何過濾器
@@ -112,8 +112,8 @@ class MeshProcessor:
             threshold.SetLowerThreshold(0.5)   # 設置下限閾值
             threshold.SetUpperThreshold(4)     # 設置上限閾值
         else:
-            threshold.SetLowerThreshold(0.25)  # 預設下限閾值
-            threshold.SetUpperThreshold(3)     # 預設上限閾值
+            threshold.SetLowerThreshold(0.4)  # 預設下限閾值
+            threshold.SetUpperThreshold(2)     # 預設上限閾值
         threshold.Update()  # 執行閾值過濾
 
         geometry_filter = vtk.vtkGeometryFilter()  # 創建幾何過濾器

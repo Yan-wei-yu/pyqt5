@@ -8,6 +8,8 @@ def process_and_reconstruct(mesh_path1, mesh_path2, mesh_path3, output_dir="."):
     # 執行點雲配準
     reg = MultiwayRegistration()
     pcd_combined = reg.run_registration(mesh_path1, mesh_path2, mesh_path3)
+    # pcd_combined = reg.run_registration_sec(mesh_path1, mesh_path2)
+
 
     # 進行泊松表面重建
     reconstructor = PointCloudReconstruction(pcd_combined)
