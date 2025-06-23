@@ -4,8 +4,8 @@ from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor 
 import vtkmodules.all as vtk  # 匯入所有 VTK 模組
 from . import (singledepthview, mutipledepthview, aipredictview,  # 匯入不同的視圖模組
                edgeview, remeshview, stitchview, analysisview, icpview,aipredictobbview,stitchview)
-from Model import Singledepthmodel, Mutipledepthmodel, Edgemodel, Aipredictmodel, Remeshmodel, Analysismodel, ICPmodel,MutipleOBBdepthmodel,Aipredictobbmodel,Stitchmodel  # 匯入不同的模型
-
+from Model import Singledepthmodel, Mutipledepthmodel, Edgemodel,  Aipredictmodel, Remeshmodel, Analysismodel, ICPmodel,MutipleOBBdepthmodel,Aipredictobbmodel,Stitchmodel  # 匯入不同的模型
+from PyQt5.QtCore import pyqtSignal  # 引入 PyQt5 的信號模組
 class View(QMainWindow):  # 定義主視圖類別，繼承自 QMainWindow
     def __init__(self, parent=None):
         super().__init__(parent)  # 呼叫父類別的建構子
@@ -16,6 +16,7 @@ class View(QMainWindow):  # 定義主視圖類別，繼承自 QMainWindow
         self.current_panel = None  # 初始化當前面板變數
         self.center()  # 使視窗置中
         self.showMaximized()  # 視窗最大化顯示
+
 
     def setup_ui(self):  # 設定 UI 介面
         self.centralWidget = QWidget()  # 創建主控件
@@ -40,6 +41,7 @@ class View(QMainWindow):  # 定義主視圖類別，繼承自 QMainWindow
             "reconstructButton": "3D模型重建",
             "stitchButton": "3D縫合網格",
             "analysisButton": "2D圖像遮罩區域分析",
+            # "frontDepthSingleButton": "單次創建前牙深度圖",
         }
         
         buttonStyle = "font-size: 26px; font-family: '標楷體', 'Times New Roman'; font-weight: bold;"  # 設定按鈕樣式
@@ -47,7 +49,7 @@ class View(QMainWindow):  # 定義主視圖類別，繼承自 QMainWindow
         for attr, text in self.buttons.items():  # 迴圈建立按鈕
             button = QPushButton(text)  # 創建按鈕
             button.setStyleSheet(buttonStyle)  # 設定樣式
-            setattr(self, attr, button)  # 使用 setattr 動態將每個按鈕以名稱註冊為類別屬性，之後可用 self.<名稱> 直接操作
+            setattr(self, attr, button)  # 將按鈕物件設為類別屬性
             self.buttonPanel.addWidget(button)  # 新增按鈕至面板
             self.buttonPanel.addSpacing(20)  # 增加間距
         
@@ -91,6 +93,7 @@ class View(QMainWindow):  # 定義主視圖類別，繼承自 QMainWindow
         self.reconstructButton.clicked.connect(lambda: self.create_reconstruct_panel())
         self.stitchButton.clicked.connect(lambda: self.create_stitch_panel())
         self.analysisButton.clicked.connect(lambda: self.create_analysis_panel())
+        # self.frontDepthSingleButton.clicked.connect(lambda: self.create_front_depth_panel())
 
 
     def create_depth_panel(self):
@@ -161,10 +164,10 @@ class View(QMainWindow):  # 定義主視圖類別，繼承自 QMainWindow
         """創建未來分割+縫合視圖面板"""
         self.clear_renderers()
         self.function_view = stitchview.StitchView(
-            self.buttonPanel, Stitchmodel.StitchModel(), self.vtk_renderer1, self.vtk_renderer2
+            self.buttonPanel, Stitchmodel.StitchModel(), self.vtk_renderer1, self.vtk_renderer2,self.iren1
         )
         self.current_panel = self.function_view.create_stitch(self.buttonPanel, self.current_panel)
-
+        
     def create_analysis_panel(self):
         """創建分析視圖面板"""
         self.clear_renderers()
@@ -173,6 +176,13 @@ class View(QMainWindow):  # 定義主視圖類別，繼承自 QMainWindow
         )
         self.current_panel = self.function_view.create_edge(self.buttonPanel, self.current_panel)
 
+    # def create_front_depth_panel(self):
+    #     """創建單次前牙深度圖視圖面板"""
+    #     self.clear_renderers()
+    #     self.function_view = frontdepthsingleview.FrontteethdepthSingleView(
+    #         self.buttonPanel, Frontdepthsinglemodel.BatchFrontDepthModel(), self.vtk_renderer1, self.vtk_renderer2
+    #     )
+    #     self.current_panel = self.function_view.create_front_depth(self.buttonPanel, self.current_panel)
     def clear_renderers(self):
         """清空所有 VTK 渲染器內的內容"""
         self.vtk_renderer1.RemoveAllViewProps()  # 移除第一個渲染器的所有物件

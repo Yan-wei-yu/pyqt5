@@ -45,7 +45,9 @@ for filename in os.listdir(depth_map_dir):
     depth_map = cv2.imread(path1, cv2.IMREAD_GRAYSCALE)
     depth_map2 = cv2.imread(path2, cv2.IMREAD_GRAYSCALE)
     height, width = depth_map2.shape
-
+    # 這行是 二值化處理，將 depth_map（灰階圖像）轉換為只有 0 和 255 的圖像：
+    #  提取輪廓，在二值圖中尋找物件邊緣：
+    # 這行是將單通道灰階圖轉換成 三通道 BGR 彩色圖：
     _, binary = cv2.threshold(depth_map, 0, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     output_image = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)

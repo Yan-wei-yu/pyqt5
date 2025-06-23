@@ -77,4 +77,29 @@ class StitchModel(BaseModel):
         final_output = processor.process_complete_workflow(thickness=0)  # 執行完整工作流程
         if final_output and os.path.exists(final_output):
             readmodel.render_file_in_second_window(renderer2, final_output)  # 在第二窗口渲染
+    def run_icp_button(self, renderer):
+        """執行ICP算法進行模型對齊"""
+        if not self.prepare_file or not self.smooth_ai_file or not self.output_folder:
+            return False
+        processor = stitchmodel.MeshProcessor(self.prepare_file, self.smooth_ai_file, self.output_folder)
+        self.target_output = processor.run_icp()  # 執行ICP對齊
+
+        # 移除現有的AIsmooth模型
+        renderer.RemoveActor(self.smooth_ai_actor)
+        self.smooth_ai_actor = None
+
+        self.target_output_actor = readmodel.create_actor(self.target_output, (0.98, 0.98, 0.92))
+        self.target_output_actor.GetProperty().SetOpacity(0.8)  # 設定透明度為50%
+        renderer.AddActor(self.target_output_actor)  # 添加新的AIsmooth模型到渲染器
+        renderer.ResetCamera()  # 重置相機視角
+        renderer.GetRenderWindow().Render()  # 重新渲染畫面
+    def crop_complete(self,collect_points):
+        """完成裁剪操作"""
+        if not self.prepare_file or not self.smooth_ai_file or not self.output_folder:
+            return False
+        processor = stitchmodel.MeshProcessor(self.prepare_file, self.smooth_ai_file, self.output_folder)
+        processor.extract_patch_from_points(self.target_output,collect_points)  # 執行裁剪操作
+
+
+
 
