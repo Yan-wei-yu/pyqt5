@@ -4,7 +4,6 @@ from meshlib import mrmeshpy
 import os
 import pymeshlab
 # import meshlib.mrmeshpy as mr
-# import trimesh
 import vtkmodules.all as vtk
 import numpy as np
 
@@ -19,14 +18,15 @@ class MeshProcessor:
         self.file_name = os.path.splitext(os.path.basename(repair_file_path))[0]  # 從修復牙檔案提取檔案名稱（不含副檔名）
     def run_icp(self):
         icp= vtk.vtkIterativeClosestPointTransform()
-        repair_file_reader = vtk.vtkSTLReader()
-        repair_file_reader.SetFileName(self.repair_file_path)
-        repair_file_reader.Update()
-        defect_file_reader = vtk.vtkPLYReader()
-        defect_file_reader.SetFileName(self.defect_file_path)
-        defect_file_reader.Update()
-        repair_polydata = repair_file_reader.GetOutput()
-        defect_polydata = defect_file_reader.GetOutput()
+        repair_reader = self.get_vtk_reader(self.repair_file_path)
+        repair_reader.SetFileName(self.repair_file_path)
+        repair_reader.Update()
+        repair_polydata = repair_reader.GetOutput()
+
+        defect_reader = self.get_vtk_reader(self.defect_file_path)
+        defect_reader.SetFileName(self.defect_file_path)
+        defect_reader.Update()
+        defect_polydata = defect_reader.GetOutput()
         icp.SetSource(repair_polydata)
         icp.SetTarget(defect_polydata)
         icp.GetLandmarkTransform().SetModeToRigidBody()
@@ -148,8 +148,8 @@ class MeshProcessor:
             threshold.SetLowerThreshold(0.5)
             threshold.SetUpperThreshold(4)
         else:
-            threshold.SetLowerThreshold(0.5)  # 預設閾值
-            threshold.SetUpperThreshold(3.5)
+            threshold.SetLowerThreshold(0.8)  # 預設閾值
+            threshold.SetUpperThreshold(4)
         threshold.Update()
 
         geometry_filter = vtk.vtkGeometryFilter()
@@ -171,7 +171,7 @@ class MeshProcessor:
         repair_file_reader = vtk.vtkSTLReader()
         repair_file_reader.SetFileName(self.repair_file_path)
         repair_file_reader.Update()
-        defect_file_reader = vtk.vtkPLYReader()
+        defect_file_reader = self.get_vtk_reader(self.defect_file_path)
         defect_file_reader.SetFileName(self.defect_file_path)
         defect_file_reader.Update()
         self.repair_file_path = self.align_models_icp(repair_file_reader.GetOutput(), defect_file_reader.GetOutput())
@@ -315,7 +315,7 @@ class MeshProcessor:
             os.makedirs(self.output_folder)
         mrmeshpy.saveMesh(shell, output_file)
         print(f"已儲存檔案至: {output_file}")
-        return stitch_only_file
+        return output_file
     def offset_smooth_subdivision(self, smooth_subdivision_file, offset_distance=0.1):
         """對平滑細分後的模型進行偏移處理"""
         ms_smooth = mrmeshpy.loadMesh(smooth_subdivision_file)
@@ -410,7 +410,7 @@ class MeshProcessor:
         return self.save_to_stitch_folder(output_file, subdivision.GetOutput())
     def combine_defect_and_smooth(self, smooth_subdivision_file):
         """將缺陷牙和平滑細分後的模型合併"""
-        defect_reader = vtk.vtkPLYReader()
+        defect_reader = self.get_vtk_reader(self.defect_file_path)
         defect_reader.SetFileName(self.defect_file_path)
         defect_reader.Update()
 
@@ -465,3 +465,14 @@ class MeshProcessor:
         
         print(f"完整工作流程已完成，最終檔案儲存於: {final_file}")
         return final_file
+    
+    def get_vtk_reader(self,file_path):
+        ext = file_path.lower().split('.')[-1]
+        if ext == "stl":
+            return vtk.vtkSTLReader()
+        elif ext == "ply":
+            return vtk.vtkPLYReader()
+        elif ext == "obj":
+            return vtk.vtkOBJReader()
+        else:
+            raise ValueError(f"不支援的檔案格式: .{ext}")
