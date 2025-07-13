@@ -29,8 +29,20 @@ def create_actor(polydata, color):
 
     actor = vtk.vtkActor()  # 創建 actor
     actor.SetMapper(mapper)  # 設定資料映射器
-    actor.GetProperty().SetColor(color)  # 設定顏色
+    prop = actor.GetProperty()
+    prop.SetColor(color)           # 設定顏色（淺灰）
+    
+    # ✨ 加入 shading 設定（類似 GeoMagic）
+
+    prop.ShadingOn()               # 開啟 shading 模式（使用 Phong）
     return actor
+# def add_lighting(renderer):
+#     light = vtk.vtkLight()
+#     light.SetLightTypeToSceneLight()
+#     light.SetPosition(1, 1, 1)
+#     light.SetFocalPoint(0, 0, 0)
+#     light.SetIntensity(0.8)
+#     renderer.AddLight(light)
 
 # 計算 actor 的幾何中心
 def calculate_center(actor):

@@ -19,6 +19,14 @@ def load_mesh(file_path):
         raise ValueError(f"Failed to load mesh from {file_path}")
     
     return polydata
+# 降低網格面數（預設保留 50% 面數）
+def simplify_mesh(polydata, reduction=0.5):
+    decimate = vtk.vtkDecimatePro()
+    decimate.SetInputData(polydata)
+    decimate.SetTargetReduction(reduction)  # 例如 0.5 表示保留 50%
+    decimate.PreserveTopologyOn()  # 保持拓撲（避免破洞）
+    decimate.Update()
+    return decimate.GetOutput()
 
 # 使用 VTK 的碰撞偵測模組檢查兩個模型是否發生碰撞
 def check_collision(mesh1, mesh2):
@@ -129,15 +137,19 @@ def visualize(mesh1, mesh2_with_distance):
 
 # 主程式
 if __name__ == "__main__":
-    mesh_path1 = "./Testdata/Up/data0402.ply"
+    # mesh_path1 = "./Testdata/Up/data0402.ply"
     # mesh_path2 = "./paperdata/compareDAISresult/data0119.ply"
-    mesh_path2 = "./paperdata/compareDAISresult/goicp/ICP_data0402_BB_our_smoothedgo.stl"
+    # mesh_path2 = "./paperdata/compareDAISresult/goicp/ICP_data0402_BB_our_smoothedgo.stl"
 
+    mesh_path1 = "./weipon/Template1-0_upper_Stage1_step0.stl"
+    mesh_path2 = "./weipon/Template1-0_lower_Stage1_step0.stl"
 
     mesh1 = load_mesh(mesh_path1)
     mesh2 = load_mesh(mesh_path2)
 
-
+    # 降低網格數（例如保留 30%）
+    mesh1 = simplify_mesh(mesh1, reduction=0.5)
+    mesh2 = simplify_mesh(mesh2, reduction=0.5)
     # #    # 對 mesh1 應用 Z 軸平移 (-1) onlay
     # transform = vtk.vtkTransform()
     # transform.Translate(0, -0.30, -0.3)  # 沿 Z 軸向下平移 1 單位
@@ -160,5 +172,5 @@ if __name__ == "__main__":
     contacts, collision_filter, out1, out2 = check_collision(mesh1, mesh2)
 
     # 使用完整 mesh2 計算與 mesh1 的距離分布，顯示內部距離熱圖
-    mesh2_with_distance = compute_contact_distances(out2, out1)
+    mesh2_with_distance = compute_contact_distances(out1, out2)
     visualize(out1, mesh2_with_distance)

@@ -66,3 +66,11 @@ def apply_gan_model(model_dir, input_file, output_file):
     except Exception as e:
         print(f"Error in apply_gan_model: {e}")
         raise
+
+
+# model_path = "D:/Weekly_Report/Thesis_Weekly_Report/paper/paper_Implementation/pyqt5/aimodel/DAISdepthr=2andcollision/"                # 模型資料夾
+# input_img = "D:/Weekly_Report/Thesis_Weekly_Report/paper/paper_Implementation/pyqt5/toKMU/AIoutput/onlay-14_LowerJawGOICPdown/flipped_256x768.png"          # 輸入圖片
+# output_img = "D:/Weekly_Report/Thesis_Weekly_Report/paper/paper_Implementation/pyqt5/toKMU/AIoutput/onlay-14_LowerJawGOICPdown/aitest.png"        # 輸出圖片
+
+# apply_gan_model(model_path, input_img, output_img)
+# print("影像處理完成，輸出檔案已儲存於：", output_img)
