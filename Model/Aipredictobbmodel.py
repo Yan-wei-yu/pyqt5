@@ -13,8 +13,6 @@ class AipredictOBBModel(BaseModel):
         self.model_folder = ""  # 預訓練模型文件夾路徑
         self.upper_file = ""  # 上顎模型文件路徑
         self.lower_file = ""  # 下顎模型文件路徑
-        # self.lower_actor = None  # 下顎模型的演員對象
-        # self.upper_actor = None  # 上顎模型的演員對象
         self.upper_opacity = 1.0  # 上顎模型透明度，預設為不透明
         self.lower_opacity = 1.0  # 下顎模型透明度，預設為不透明
         self.output_folder = ""  # 輸出文件夾路徑
@@ -70,7 +68,7 @@ class AipredictOBBModel(BaseModel):
             # 標記邊界點（上顎用黃色，下顎用預設顏色）
             pictureedgblack.mark_boundary_points(output_file_path_up, self.output_folder + "/edgeUp", color=(255, 255, 0))
             pictureedgblack.mark_boundary_points(output_file_path_down, self.output_folder + "/edgeDown")
-            # 合併上下顎邊界圖
+            # 合併上下顎邊界圖，並匯出第三張咬合間隙的圖
             twopicturedege.combine_image(
                 self.output_folder + "/edgeDown/" + base_name + "down",
                 self.output_folder + "/edgeUp/" + base_name_up,

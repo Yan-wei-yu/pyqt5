@@ -72,7 +72,7 @@ class EdgeModel(BaseModel):
         # 讀取標記後的下顎影像檔案
         red_image_files = os.listdir(self.output_folder + "/edgeDown/")
         
-        # 合併上顎與下顎的邊緣影像
+        # 合併上下顎邊界圖，並匯出第三張咬合間隙的圖
         for image in red_image_files:
             twopicturedege.combine_image(
                 self.output_folder + "/edgeDown/" + image,

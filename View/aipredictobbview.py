@@ -98,13 +98,13 @@ class AimodelOBBView(BaseView):
         self.threedupper_file.setText(self.model.upper_file)  # 更新上顎文件路徑顯示
         self.output_folder.setText(self.model.output_folder)  # 更新輸出文件夾路徑顯示
         self.model.render_model(self.render_input)  # 渲染模型到視圖
-        # 如果下顎文件存在，設置高亮數據
-        # 根據當前選擇更新 highlight_style 的 polydata
+        # 更新模型選擇器，因為一開始加入模型會逐漸增加，選項內容也要逐漸增加
         self.update_model_selector()
+        # 根據選擇的模型去裁剪
         if self.model_selector.currentText() == "下顎" and self.model.lower_file != '':
             self.highlight_style.SetPolyData(self.model.model2)  # 下顎模型
         elif self.model_selector.currentText() == "上顎" and self.model.upper_file != '':
-            self.highlight_style.SetPolyData(self.model.model1)  # 上顎模型 (假設 model1 是上顎)
+            self.highlight_style.SetPolyData(self.model.model1) # 上顎模型
         self.render_input.ResetCamera()  # 重置攝像機
         self.render_input.GetRenderWindow().Render()  # 渲染窗口
 
@@ -117,7 +117,7 @@ class AimodelOBBView(BaseView):
                 self.model_selector.addItem("上顎")
             if self.model_selector.count() == 0:
                 self.model_selector.addItem("無模型")
-
+    # 這邊用來切換選擇的模型 並可以選取做為刪除或裁剪的模型
     def switch_model(self):
             """當選擇模型改變時，更新 highlight_style 的 polydata"""
             if self.model_selector.currentText() == "下顎" and self.model.lower_file != '':

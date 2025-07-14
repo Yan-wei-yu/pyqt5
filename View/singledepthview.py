@@ -1,3 +1,4 @@
+# 這是打單一深度圖的視圖模組
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSlider  # 從 PyQt5 導入必要的 UI 組件
 from PyQt5.QtCore import Qt  # 從 PyQt5 導入核心功能，例如 Qt.Horizontal
 from .baseview import BaseView  # 從當前目錄下的 baseview 模組導入 BaseView 類

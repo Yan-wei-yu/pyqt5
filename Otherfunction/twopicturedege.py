@@ -1,3 +1,4 @@
+#主要功能是處理兩張圖像，檢測紅色和黃色區域，並將重疊區域標記為藍色，最終合併圖像並保存結果。
 import numpy as np  # 導入 NumPy 用於數值運算和陣列處理
 from PIL import Image  # 導入 PIL 的 Image 模組用於圖像處理
 import os  # 導入 os 模組用於檔案系統操作
