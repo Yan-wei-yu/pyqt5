@@ -1,21 +1,33 @@
-import cv2
-import numpy as np
+# 主要目的：此程式碼定義了一個函數 `apply_blue_mask`，用於將藍色掩碼應用於灰階圖像，生成遮罩後的圖像並保存。具體來說，它將原始圖像的白色部分（像素值 255）設為黑色，然後使用藍色掩碼（轉為二值化遮罩）保留原始圖像中對應的區域。此功能適用於牙科圖像處理流程，例如將交互式選取（來自 `LassoInteractor`）的藍色遮罩應用於 GAN 修復的圖像，生成最終的處理結果，與 `DentalModelReconstructor` 等模組整合。
 
-def apply_blue_mask(original_image_array, blue_mask_array,outdata_name):
-    # original_image = cv2.imread(os.path.join(original_image_path))
-    # blue_mask_filename = os.path.join(blue_mask_path)
+import cv2  # 導入 OpenCV 庫，用於圖像處理和操作。
+import numpy as np  # 導入 NumPy 庫，用於數值運算和陣列處理。
+
+def apply_blue_mask(original_image_array, blue_mask_array, outdata_name):  # 定義應用藍色掩碼的函數。
+    """
+    將藍色掩碼應用於灰階圖像，生成遮罩後的圖像並保存。
+
+    參數:
+        original_image_array: NumPy 陣列，原始灰階圖像（單通道，8 位元）。
+        blue_mask_array: NumPy 陣列，藍色掩碼圖像（BGR 格式，藍色區域表示保留區域）。
+        outdata_name: 字串，輸出圖像的保存路徑。
+
+    返回:
+        無返回值，直接將結果圖像保存到指定路徑。
+    """
     # 將原始圖像的白色部分變為黑色
-    white_mask = cv2.inRange(original_image_array, np.array([255]), np.array([255]))
-    original_image_array[np.where(white_mask > 0)] = [0]
+    white_mask = cv2.inRange(original_image_array, np.array([255]), np.array([255]))  # 創建白色像素（值為 255）的遮罩。
+    original_image_array[np.where(white_mask > 0)] = [0]  # 將白色像素設為黑色（值為 0）。
 
     # 應用藍色區塊掩碼
-    blue_mask_gray = cv2.cvtColor(blue_mask_array, cv2.COLOR_BGR2GRAY)
-    _, thresholded_mask = cv2.threshold(blue_mask_gray, 1, 255, cv2.THRESH_BINARY)
+    blue_mask_gray = cv2.cvtColor(blue_mask_array, cv2.COLOR_BGR2GRAY)  # 將藍色掩碼圖像轉為灰階。
+    _, thresholded_mask = cv2.threshold(blue_mask_gray, 1, 255, cv2.THRESH_BINARY)  # 對灰階掩碼進行二值化（閾值 1，保留非零像素）。
     
     # 使用藍色掩碼到原始圖像
-    result_image_array = cv2.bitwise_and(original_image_array, original_image_array, mask=thresholded_mask)
+    result_image_array = cv2.bitwise_and(original_image_array, original_image_array, mask=thresholded_mask)  # 應用二值化遮罩，保留遮罩為 255 的區域。
 
-    cv2.imwrite(outdata_name, result_image_array)
+    # 保存結果圖像
+    cv2.imwrite(outdata_name, result_image_array)  # 將遮罩後的圖像保存到指定路徑。
 
 
 

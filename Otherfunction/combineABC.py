@@ -1,3 +1,4 @@
+# 主要功能：將三張圖像水平拼接並保存到指定路徑
 import cv2  # OpenCV 庫，用於圖像處理
 import numpy as np  # NumPy 庫，用於數組操作
 
