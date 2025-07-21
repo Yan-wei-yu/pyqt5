@@ -22,7 +22,9 @@ def process_and_reconstruct(mesh_path1, mesh_path2, mesh_path3, output_dir="."):
     reg = MultiwayRegistration()  # 建立多視角 ICP 配準物件
     # 執行配準，目前僅使用 mesh_path1 和 mesh_path2
     # 如果需要使用第三個模型，可以改成 run_registration(mesh_path1, mesh_path2, mesh_path3)
-    pcd_combined = reg.run_registration_sec(mesh_path1, mesh_path2)
+    # pcd_combined = reg.run_registration_sec(mesh_path1, mesh_path2)
+    pcd_combined = reg.run_registration(mesh_path1, mesh_path2, mesh_path3)  # 執行配準，將三個模型合併為一個點雲
+
 
     # -------------------- [2] 進行 Poisson 表面重建 --------------------
     reconstructor = PointCloudReconstruction(pcd_combined)  # 初始化重建器，傳入合併後的點雲
@@ -40,11 +42,11 @@ def process_and_reconstruct(mesh_path1, mesh_path2, mesh_path3, output_dir="."):
     output_filename1 = os.path.join(output_dir, f"ICP_{name_without_ext}.stl")  # 輸出檔案路徑（增加前綴 ICP_）
     
     reconstructor.save_mesh(output_filename1)  # 將重建後的網格儲存為 STL 檔
-    # reconstructor.visualize()  # （註解掉）如需視覺化，可解除註解呼叫此方法
+    reconstructor.visualize()  # （註解掉）如需視覺化，可解除註解呼叫此方法
 
     # 回傳輸出的 STL 檔案路徑
     return output_filename1
 
 
-# 執行函式
-# process_and_reconstruct( "./0002/bbox/redata0006bbox.stl","./0002/bbox/redata0006bbox-90.stl","./0002/bbox/redata0006bbox--90.stl")
+# # 執行函式
+# process_and_reconstruct( "./0002/rebbox/redata0002bbox.stl","./0002/rebbox/redata0002bbox-90.stl","./0002/rebbox/redata0002bbox--90.stl")

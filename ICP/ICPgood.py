@@ -115,9 +115,9 @@ class MultiwayRegistration:
         mesh1 = o3d.io.read_triangle_mesh(mesh_target)  # 目標網格
         mesh2 = o3d.io.read_triangle_mesh(mesh_source)  # 源網格
         mesh3 = o3d.io.read_triangle_mesh(mesh_third)  # 第三個網格
-        mesh1.paint_uniform_color([1, 0.706, 0])  # 橙色
-        mesh2.paint_uniform_color([0, 0.706, 1])  # 青色
-        mesh3.paint_uniform_color([0, 1, 0])      # 綠色
+        mesh1.paint_uniform_color([0, 1, 0])      # 綠色
+        mesh2.paint_uniform_color([0, 0, 0.5])      # 紅色
+        mesh3.paint_uniform_color([0, 0, 1])    # 深藍色
 
         # 轉換為點雲並提取頂點
         source = o3d.geometry.PointCloud()
@@ -134,7 +134,8 @@ class MultiwayRegistration:
 
         # 平移調整
         target.translate(-np.mean(np.asarray(target.points), axis=0))  # 目標點雲移至原點
-        source.translate(np.array([-5, 0, -2]))  # 源點雲平移
+        source.translate(np.array([-4.5, -2, -5]))  # 源點雲平移
+        # source.translate(np.array([-5, 0, -2]))  # 源點雲平移
         third.translate(np.array([5, 0, -2]))    # 第三點雲平移
 
         # 估計法向量
@@ -147,6 +148,8 @@ class MultiwayRegistration:
         target.paint_uniform_color([0, 1, 0])  # 綠色
         source.paint_uniform_color([1, 0, 0])  # 紅色
         third.paint_uniform_color([0, 0, 1])   # 藍色
+        # o3d.visualization.draw_geometries([source, target, third], window_name="Point Cloud Visualization")
+
 
         # 第一次配準（source 與 target）
         pcds_down = self.load_point_clouds([source, target])  # 降採樣點雲
@@ -192,12 +195,14 @@ class MultiwayRegistration:
                 option1)
 
         # 最終合併
+
         pcds1 = self.load_point_clouds([third, pcd_combined])
         pcd_combined1 = o3d.geometry.PointCloud()
         for point_id in range(len(pcds1)):
             pcds1[point_id].transform(pose_graph1.nodes[point_id].pose)
             pcd_combined1 += pcds1[point_id]
-
+        o3d.visualization.draw_geometries([pcds1[0], pcds1[1]],
+                                  window_name="Aligned Three Clouds")
         return pcd_combined1  # 返回最終合併的點雲
     def run_registration_sec(self, mesh_target, mesh_source):
         """
@@ -273,9 +278,9 @@ class MultiwayRegistration:
 # if __name__ == "__main__":
 #     # 替換成你實際的 STL 檔案路徑
 #     mesh_paths = [
-#         "./0005/rebbox/redata0005bbox.stl",
-#         "./0005/rebbox/redata0005bbox-90.stl",
-#         "./0005/rebbox/redata0005bbox--90.stl"
+#         "./test/bb.stl",
+#         "./test/-90.stl",
+#         "./test/90.stl"
 #     ]
 #     reg = MultiwayRegistration()
 #     result = reg.run_registration(mesh_paths[0], mesh_paths[1], mesh_paths[2])

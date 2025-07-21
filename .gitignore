@@ -11,7 +11,7 @@ DAIS0104goodbesidewgan/
 *.png
 *.zip
 *.7z
-
+*.txt
 aimodel/
 output/
 resources/
