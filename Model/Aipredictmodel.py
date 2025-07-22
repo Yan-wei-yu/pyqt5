@@ -1,10 +1,10 @@
 from PyQt5.QtCore import pyqtSignal
 from .BaseModel import BaseModel
 import os
-from Otherfunction import readmodel, singleimgcolor, trianglegoodobbox, pictureedgblack, twopicturedege, combineABC, fillwhite
+from Otherfunction import readmodel, singleimgcolor, trianglegood, pictureedgblack, twopicturedege, combineABC
 import vtk
 
-class AipredictOBBModel(BaseModel):
+class AipredictModel(BaseModel):
     model_updated = pyqtSignal()  # 定義類級別的信號，用於通知模型更新
 
     # 初始化函數
@@ -13,6 +13,8 @@ class AipredictOBBModel(BaseModel):
         self.model_folder = ""  # 預訓練模型文件夾路徑
         self.upper_file = ""  # 上顎模型文件路徑
         self.lower_file = ""  # 下顎模型文件路徑
+        # self.lower_actor = None  # 下顎模型的演員對象
+        # self.upper_actor = None  # 上顎模型的演員對象
         self.upper_opacity = 1.0  # 上顎模型透明度，預設為不透明
         self.lower_opacity = 1.0  # 下顎模型透明度，預設為不透明
         self.output_folder = ""  # 輸出文件夾路徑
@@ -49,7 +51,7 @@ class AipredictOBBModel(BaseModel):
         
         renderer.ResetCamera()  # 重置攝像機
         renderer.GetRenderWindow().Render()  # 渲染窗口
-        renderer.GetRenderWindow().SetSize(256, 256)  # 設置渲染窗口大小為256x256
+        renderer.GetRenderWindow().SetSize(256, 256)  # 設置渲染窗口大小
         self.lower_file_modify = self.output_folder + "/" + base_name + "_modtify.ply"  # 修改後的下顎文件路徑
 
         # 根據是否有上下顎文件執行不同邏輯
@@ -57,15 +59,15 @@ class AipredictOBBModel(BaseModel):
             # 處理上下顎都存在的情況
             self.upper_opacity = 0  # 隱藏上顎
             self.upper_actor.GetProperty().SetOpacity(self.upper_opacity)
-            # 生成下顎的深度圖（使用OBB方法）
-            output_file_path_down = self.combine_three_depth_obb(renderer,base_name)
+            # 生成下顎的深度圖
+            output_file_path_down = self.combine_three_depth(renderer, base_name)
             self.upper_opacity = 1  # 顯示上顎
             self.lower_opacity = 0  # 隱藏下顎
             self.upper_actor.GetProperty().SetOpacity(self.upper_opacity)
             self.lower_actor.GetProperty().SetOpacity(self.lower_opacity)
-            # 生成上顎的深度圖（使用OBB方法）
-            output_file_path_up = self.combine_three_depth_obb(renderer,base_name_up)
-            # 標記邊界點（上顎用黃色，下顎用預設顏色）
+            # 生成上顎的深度圖
+            output_file_path_up = self.combine_three_depth(renderer, base_name_up)
+            # 標記邊界點
             pictureedgblack.mark_boundary_points(output_file_path_up, self.output_folder + "/edgeUp", color=(255, 255, 0))
             pictureedgblack.mark_boundary_points(output_file_path_down, self.output_folder + "/edgeDown")
             # 合併上下顎邊界圖，並匯出第三張咬合間隙的圖
@@ -77,7 +79,7 @@ class AipredictOBBModel(BaseModel):
                 output_file_path_up
             )
             predictthree_pic = self.output_folder + "/predict.png"  # 預測圖路徑
-            # 合併三張圖片（上下顎深度圖與邊界圖）
+            # 合併三張圖片
             combineABC.merge_images(output_file_path_down, output_file_path_up, 
                                     self.output_folder + "/combinetwoedge/" + base_name + "down.png", 
                                     predictthree_pic)
@@ -89,13 +91,12 @@ class AipredictOBBModel(BaseModel):
             self.lower_opacity = 1  # 顯示下顎
             self.upper_actor.GetProperty().SetOpacity(self.upper_opacity)
             self.lower_actor.GetProperty().SetOpacity(self.lower_opacity)
-            self.SaveDownAsPLY( self.lower_file_modify)  # 保存當前渲染為PLY文件
-            # 使用OBB重建器生成3D模型
-            reconstructor = trianglegoodobbox.DentalModelReconstructor(output_file_path_ai, self.lower_file_modify, output_stl_path)
+            # 使用重建器生成3D模型
+            reconstructor = trianglegood.DentalModelReconstructor(output_file_path_ai, self.lower_file, output_stl_path)
             reconstructor.reconstruct()
             smoothed_stl_path = self.output_folder + '/ai_' + base_name + "_smooth.stl"  # 平滑後STL路徑
-            self.smooth_stl(output_stl_path, smoothed_stl_path)  # 平滑處理STL模型
-            readmodel.render_file_in_second_window(render2, smoothed_stl_path)  # 在第二窗口渲染平滑後模型
+            self.smooth_stl(output_stl_path, smoothed_stl_path)  # 平滑處理
+            readmodel.render_file_in_second_window(render2, smoothed_stl_path)  # 在第二窗口渲染
 
         elif self.lower_file and self.output_folder and self.model_folder:
             # 僅處理下顎的情況
@@ -106,21 +107,21 @@ class AipredictOBBModel(BaseModel):
             # 使用GAN模型生成AI深度圖
             singleimgcolor.apply_gan_model(self.model_folder, output_file_path, output_file_path_ai)
             output_stl_path = self.output_folder + '/ai_' + base_name + ".stl"  # STL文件路徑
-            self.SaveDownAsPLY(self.lower_file_modify)  # 保存當前渲染為PLY文件
-            # 使用OBB重建器生成3D模型
-            reconstructor = trianglegoodobbox.DentalModelReconstructor(output_file_path_ai, self.lower_file_modify, output_stl_path)
+            self.SaveCurrentRenderWindowAsPLY(renderer, self.lower_file_modify)  # 保存當前渲染為PLY
+            # 使用重建器生成3D模型
+            reconstructor = trianglegood.DentalModelReconstructor(output_file_path_ai, self.lower_file_modify, output_stl_path)
             reconstructor.reconstruct()
             smoothed_stl_path = self.output_folder + '/ai_' + base_name + "_smooth.stl"  # 平滑後STL路徑
-            self.smooth_stl(output_stl_path, smoothed_stl_path)  # 平滑處理STL模型
-            readmodel.render_file_in_second_window(render2, smoothed_stl_path)  # 在第二窗口渲染平滑後模型
+            self.smooth_stl(output_stl_path, smoothed_stl_path)  # 平滑處理
+            readmodel.render_file_in_second_window(render2, smoothed_stl_path)  # 在第二窗口渲染
 
         # self.model_updated.emit()  # 發送信號通知模型已更新
-        renderer.GetRenderWindow().SetSize(768, 768)  # 恢復渲染窗口大小為768x768
+        renderer.GetRenderWindow().SetSize(768, 768)  # 恢復渲染窗口大小
         return True
 
     # 平滑STL模型
     def smooth_stl(self, input_stl_path, output_stl_path, iterations=20, relaxation_factor=0.2):
-        """對STL文件進行平滑處理"""
+        """對 STL 進行平滑處理"""
         reader = vtk.vtkSTLReader()  # STL文件讀取器
         reader.SetFileName(input_stl_path)
         
@@ -138,33 +139,33 @@ class AipredictOBBModel(BaseModel):
         writer.Write()
 
     # 將當前渲染窗口保存為PLY文件
-    def SaveDownAsPLY(self, file_path):
+    def SaveCurrentRenderWindowAsPLY(self, renderer, file_path):
         """
         將當前可見模型從渲染窗口保存為PLY文件。
         提取所有可見演員的PolyData並合併為單一文件。
         """
-        writer = vtk.vtkPLYWriter()
-        writer.SetInputData(self.model2)  # 使用最新的下顎網格
-        writer.SetFileName(file_path)
-        writer.Write()
+        append_filter = vtk.vtkAppendPolyData()  # 用於合併多個PolyData
+        actor_count = 0
 
-    # 使用OBB生成三視圖深度圖
-    def combine_three_depth_obb(self, renderer,filename):
-        renderer.GetRenderWindow().SetSize(256, 256)  # 設置渲染窗口大小為256x256
+        # 遍歷當前場景中的所有演員
+        for actor in renderer.GetActors():
+            mapper = actor.GetMapper()
+            polydata = mapper.GetInput()
+            if polydata:
+                clean_filter = vtk.vtkCleanPolyData()  # 清理數據，移除重複點
+                clean_filter.SetInputData(polydata)
+                clean_filter.Update()
+                append_filter.AddInputData(clean_filter.GetOutput())
+                actor_count += 1
 
-        if self.upper_opacity == 1:  # 如果上顎可見
-            output_file_path = f"{self.output_folder}/{filename}.png"  # 上顎深度圖路徑
-            self.upper_center = readmodel.calculate_center(self.upper_actor)  # 計算上顎中心
-            # 使用OBB設置攝像機並返回縮放過濾器
-            scale_filter = readmodel.setup_camera_with_obb(renderer, renderer.GetRenderWindow(), self.upper_actor,
-                                                           self.upper_center, self.lower_actor, self.upper_opacity, self.angle)
-        else:  # 如果下顎可見
-            output_file_path = f"{self.output_folder}/{filename}down.png"  # 下顎深度圖路徑
-            # 使用OBB設置攝像機（無上顎中心）
-            scale_filter = readmodel.setup_camera_with_obb(renderer, renderer.GetRenderWindow(), self.upper_actor,
-                                                           None, self.lower_actor, self.upper_opacity, self.angle)
+        if actor_count == 0:
+            print("沒有可保存的模型。")
+            return
 
-        readmodel.save_depth_image(output_file_path, scale_filter)  # 保存深度圖
-        bound_image = pictureedgblack.get_image_bound(output_file_path)  # 獲取邊界圖像
-        fillwhite.process_image_pair(bound_image, output_file_path, output_file_path)  # 填充白色處理
-        return output_file_path  # 返回生成的深度圖路徑
+        # 合併並保存
+        append_filter.Update()
+        ply_writer = vtk.vtkPLYWriter()  # PLY文件寫入器
+        ply_writer.SetFileName(file_path)
+        ply_writer.SetInputData(append_filter.GetOutput())
+        ply_writer.Write()
+        print(f"已成功將當前場景模型保存為: {file_path}")
